@@ -65,7 +65,9 @@ class CMTD:
             local_initial_distribution = np.zeros(self.card_Etat)
             local_initial_distribution[i] = 1
             ##
-            print(self.transitoire(local_initial_distribution, n))
+            print(
+                f"{local_initial_distribution} { self.transitoire(local_initial_distribution, n) } "
+            )
 
     def is_irreductible(self):
         # build all the matrices M.power(1-->card_Etat)
