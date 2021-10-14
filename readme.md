@@ -5,3 +5,7 @@
 * pip3 install -r requirements.txt
 * cd ./CMTD
 * python3 main.py
+
+# CMTC : chaine de markov à temps continu
+* cd ./CMTC
+* python3 main.py
