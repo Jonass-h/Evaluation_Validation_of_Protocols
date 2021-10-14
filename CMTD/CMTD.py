@@ -115,12 +115,10 @@ class CMTD:
         state_period = np.ones(shape=self.card_Etat)
         i = 0
         while i < self.card_Etat:
-            state_gcd = 0
-            for k in range(0, self.card_Etat):
-                state_gcd = gcd([state_gcd, (matrix_powers[i][i][k]).split()])
+            state_gcd = np.gcd.reduce(matrix_powers[i][i][:])
             state_period[i] = state_gcd
             i = i + 1
-        return state_period, gcd(state_period)
+        return state_period, np.gcd.reduce(state_period)
 
     def is_ergodic(self):
         _, cmtd_period = self.get_states_period()
