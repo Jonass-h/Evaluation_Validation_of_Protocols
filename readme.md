@@ -10,10 +10,10 @@
 * cd ./CMTC
 * python3 main.py
 
-# CMTC : file d'attente
+# FA : file d'attente
 * cd ./FA
 * python3 main.py
 
-# CMTC : reseaux de petri
+# RdP : reseaux de petri
 * cd ./RdP
 * python3 main.py
