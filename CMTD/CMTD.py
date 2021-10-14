@@ -59,7 +59,7 @@ class CMTD:
         print("entrer n =")
         n = int(input())
 
-        print("######## voici les diffenrent vecteur d'etat transitoire ########")
+        print("######## voici les different vecteur d'etat transitoire ########")
         for i in range(0, self.card_Etat):
             # generate an initial distribution
             local_initial_distribution = np.zeros(self.card_Etat)
