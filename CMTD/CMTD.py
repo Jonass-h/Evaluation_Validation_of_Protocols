@@ -1,4 +1,5 @@
 import numpy as np
+from Graph import Graph
 
 
 class CMTD:
@@ -20,22 +21,30 @@ class CMTD:
 
         # declare a local transition matrix
         self.transition_matrix = np.zeros(shape=(self.card_Etat, self.card_Etat))
-        for i in range(0, self.card_Etat):
+        i = 0
+        while i < self.card_Etat:
             line = np.zeros(self.card_Etat)
-            for j in range(0, self.card_Etat):
+            j = 0
+            while j < self.card_Etat:
                 print(f"p[{i}][{j}] = ")
                 element = float(input())
                 # print(f"element = {element}")
+                line[j] = element
                 if not self.is_probability(element):
                     print(" help : les valeurs doivent etre entre 0 et 1")
-                    return False
-                line[j] = element
+                    print("        re-taper ... ")
+                    j = j - 1
+                j = j + 1
+
+            self.transition_matrix[i] = line
             if not self.line_is_distribution(line):
                 print(
                     " help : les lignes doivent etre des distributions de probabilité"
                 )
-                return False
-            self.transition_matrix[i] = line
+                print("        re-taper ... ")
+                i = i - 1
+            i = i + 1
+
         print("###############" " matrice de transitoin #################")
         print(self.transition_matrix)
         print("##########################################################")
@@ -69,7 +78,7 @@ class CMTD:
                 f"{local_initial_distribution} { self.transitoire(local_initial_distribution, n) } "
             )
 
-    def is_irreductible(self):
+    def is_irreductible_old_version(self):
         # build all the matrices M.power(1-->card_Etat)
         matrix_powers = np.zeros(shape=(self.card_Etat, self.card_Etat, self.card_Etat))
         matrix_powers[:][:][0] = self.transition_matrix
@@ -95,7 +104,11 @@ class CMTD:
             i = i + 1
         return True
 
-    def get_states_period(self):
+    def is_irreductible(self):
+        g = Graph(self.card_Etat)
+        return g.is_irreductible()
+
+    def get_states_period_old_version(self):
         # this function return the period for each state
         # and  the period of the CMTD
 
@@ -119,6 +132,9 @@ class CMTD:
             state_period[i] = state_gcd
             i = i + 1
         return state_period, np.gcd.reduce(state_period)
+
+    def get_states_period(self):
+        return 5
 
     def is_ergodic(self):
         _, cmtd_period = self.get_states_period()
