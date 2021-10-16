@@ -69,7 +69,7 @@ class Graph:
                 print("")
 
     # the matrix is an np.array
-    def graph_from_matrix(self, matrix, size):
+    def graph_from_matrix(self, size, matrix):
         g = Graph(size)
         for i in range(size):
             for j in range(size):

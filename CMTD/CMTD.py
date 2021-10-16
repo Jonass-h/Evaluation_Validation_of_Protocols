@@ -78,35 +78,10 @@ class CMTD:
                 f"{local_initial_distribution} { self.transitoire(local_initial_distribution, n) } "
             )
 
-    def is_irreductible_old_version(self):
-        # build all the matrices M.power(1-->card_Etat)
-        matrix_powers = np.zeros(shape=(self.card_Etat, self.card_Etat, self.card_Etat))
-        matrix_powers[:][:][0] = self.transition_matrix
-        print("matrix_powers[:][:][0]")
-        print(matrix_powers[:][:][0])
-
-        for i in range(1, self.card_Etat):
-            matrix_powers[:][:][i] = (matrix_powers[:][:][i - 1]).dot(
-                self.transition_matrix
-            )
-            print(f"matrix_powers[:][:][ {i} ]")
-            print(matrix_powers[:][:][i])
-
-        i = j = 0
-        while i < self.card_Etat:
-            while j < self.card_Etat:
-                sum = 0
-                for k in range(0, self.card_Etat):
-                    sum = sum + matrix_powers[i][j][k]
-                if sum == float(0):
-                    return False
-                j = j + 1
-            i = i + 1
-        return True
-
     def is_irreductible(self):
         g = Graph(self.card_Etat)
-        return g.is_irreductible()
+        g_prime = g.graph_from_matrix(self.card_Etat, self.transition_matrix)
+        return g_prime.is_irreductible()
 
     def get_states_period_old_version(self):
         # this function return the period for each state
