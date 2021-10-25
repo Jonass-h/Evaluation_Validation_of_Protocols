@@ -107,19 +107,3 @@ class Graph:
 
     def is_irreductible(self):
         return self.get_SCC_number() == 1
-
-
-# # Create a graph given in the above diagram
-# g = Graph(5)
-# g.addEdge(1, 0)
-# g.addEdge(0, 2)
-# g.addEdge(2, 1)
-# g.addEdge(0, 3)
-# g.addEdge(3, 4)
-
-
-# print("Following are strongly connected components " + "in given graph")
-# # g.printSCCs()
-# print(g.get_SCC_number())
-# # This code is contributed by Neelam Yadav
-
