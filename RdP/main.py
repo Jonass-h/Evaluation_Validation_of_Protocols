@@ -3,12 +3,25 @@ from RdP import RdP
 
 
 if __name__ == "__main__":
-    c_moins = np.array([[1, 2, 4], [0, 1, 0], [0, 0, 0]])
-    c_plus = np.array([[0, 0, 0], [0, 3, 0], [2, 1, 1]])
-    marquage =np.array( [3, 1, 0])
-    rdp1 = RdP(n=3, m=3, c_moins=c_moins, c_plus=c_plus, marquage=marquage)
+    '''     
+        # Borné  Réinitialisable
+        c_moins_1   = np.array([[0,1,1,0,0],[1,0,0,1,0],[1,0,0,0,1]])
+        c_plus_1    = np.array([[1,0,0,1,1],[0,1,0,0,0],[0,0,1,0,0]])
+        marquage_1  = np.array( [1, 0, 0])
+        rdp_1       = RdP(n=3, m=5, c_moins=c_moins_1, c_plus=c_plus_1, marquage=marquage_1)
+    '''
+    # non Borné  Réinitialisable
+    c_moins_2   = np.array([[0,0,1,0],[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
+    c_plus_2    = np.array([[0,1,0,0],[0,1,0,0],[1,0,0,0],[0,0,0,1],[0,0,1,0]])
+    marquage_2  = np.array( [0,0,1,1,0])
+    rdp_2       = RdP(5,4,c_moins_2, c_plus_2,marquage_2)
+
+
     print("*********************************************************")
-    print(f"bornitude de RdP : {rdp1.rdp_est_borne()}")  
+    print(f"bornitude de RdP : {rdp_2.rdp_est_borne()}")
     print("*********************************************************")
-    print(f" RdP sans blocage  : {rdp1.rdp_sans_blocage()}")
+    #print(f" RdP sans blocage  : {rdp1.rdp_sans_blocage()}")
+    print("*********************************************************")
+    #print(f" RdP reinitialisable  : {rdp_1.rdp_est_reinitialisable()}")
+    #print(f" RdP reinitialisable  : {rdp_2.rdp_est_reinitialisable()}")
     

@@ -85,9 +85,15 @@ class RdP:
     def est_franchissable(self, marquage_actuel, transition_idx):
         return np.all(marquage_actuel >= self.c_moins[:, transition_idx])
     
-    def superior(self, newM, oldM):
-        return np.all(newM >= oldM) and np.any(newM > oldM)
+    def superior(self, nouveau_marquage, ancien_marquage):
+        return np.all(nouveau_marquage >= ancien_marquage) and np.any(nouveau_marquage > ancien_marquage)
     
+    def superior_all(self,nouveau_marquage,list_marquage_traité):
+        for item in list_marquage_traité :
+            if not self.superior(nouveau_marquage,item):
+                return False
+        return True
+
     def rdp_est_borne(self):
         traité = []
         non_traité = [self.marquage]
@@ -103,14 +109,12 @@ class RdP:
 
             if not marquage_exist:
                 traité.append(marquage_actuel)
-                for t in range(self.n):
+                for t in range(self.m):
                     if self.est_franchissable(marquage_actuel,t):
                         nouveau_marquage= marquage_actuel + self.c[:,t]
                         print(f"{marquage_actuel} ****** {nouveau_marquage}")
                         non_traité.append(nouveau_marquage)
-                        
-                    
-                        if( self.superior(nouveau_marquage, marquage_actuel) ):
+                        if( self.superior_all(nouveau_marquage,traité) ):
                             print("  rdp non borné ")
                             return False
                     
@@ -133,7 +137,7 @@ class RdP:
             if not marquage_exist:
                 traité.append(marquage_actuel)
                 counter=0
-                for t in range(self.n):
+                for t in range(self.m):
                     if self.est_franchissable(marquage_actuel,t):
                         counter+=1
                         nouveau_marquage= marquage_actuel + self.c[:,t]
@@ -150,7 +154,69 @@ class RdP:
                     
         print("rdp sans blocage ")
         return True
+    
+    def marquage_existe(self,marquage,liste_traité):
+        for item in liste_traité:
+            if (np.all(item == marquage)):
+                return True
+        return False
 
-    def rdp_reinitialisable(self):
+    def marquage_mene_vers_initiale(self,marquage,liste_marquage_menant):
+        # verifier si un marquage donné mene vers le marquage initiale
+        for item in liste_marquage_menant:
+            if (np.all(item == marquage)):
+                return True
+        else :
+            traité = []
+            non_traité = [marquage]
+            
+            while len(non_traité) != 0:
+                marquage_actuel = non_traité.pop(0)
+                #print(f"marquage_actuel  = {marquage_actuel}")
+                # verifier si le marquage est déja traité
+                marquage_exist = self.marquage_existe(marquage_actuel,traité)
+
+                if not marquage_exist:
+                    traité.append(marquage_actuel)
+                    for t in range(self.m):
+                        if self.est_franchissable(marquage_actuel,t):
+                            nouveau_marquage= marquage_actuel + self.c[:,t]
+                            #print(nouveau_marquage)
+                            if np.all(nouveau_marquage == self.marquage) or self.marquage_existe(nouveau_marquage,liste_marquage_menant):
+                                return True
+                            if( self.superior(nouveau_marquage, marquage_actuel) ):
+                                print("RdP infini ... ")
+                                traité.append(nouveau_marquage)
+                            else :
+                                #print("appednig non_traité")
+                                non_traité.append(nouveau_marquage)
+                #print(non_traité)
+            return False
+
+    def rdp_est_reinitialisable(self):
+        mene_ver_marquage_initial=[]
+        traité = []
+        non_traité = [self.marquage]
         
-
+        while len(non_traité) != 0:
+            # verifier si le marquage à été déja calculé
+            marquage_actuel = non_traité.pop(0)
+            print(marquage_actuel)
+            marquage_exist = self.marquage_existe(marquage_actuel,traité)
+            #print(f"marquage_exist exist : {marquage_exist}")
+            if not marquage_exist:
+                # tester si ce marquage mene vers le marquage initale
+                if self.marquage_mene_vers_initiale(marquage_actuel,mene_ver_marquage_initial) :
+                    mene_ver_marquage_initial.append(marquage_actuel)
+                else:
+                    return False
+                
+                traité.append(marquage_actuel)
+                for t in range(self.m):
+                    if self.est_franchissable(marquage_actuel,t):
+                        nouveau_marquage= marquage_actuel + self.c[:,t]
+                        if( self.superior(nouveau_marquage, marquage_actuel) ):
+                            traité.append(nouveau_marquage)
+                        else :
+                            non_traité.append(nouveau_marquage)
+        return True
