@@ -10,19 +10,12 @@ class RdP:
     marquage = 0
 
     ## methods
-    def __init__(self):
-        print(" entrer le nombre de place")
-        self.n = int(input())
-        print(" entrer le nombre de transition")
-        self.m = int(input())
-        print(" entrer le marquage initiale")
-        self.read_marquage()
-        print(" entrer la matrice c moins")
-        self.read_c(1)
-        print(" entrer la matrice c plus")
-        self.read_c(0)
-        print(" Bornitude de rdp")
-        self.rdp_est_borne()
+    def __init__(self, n, m, c_moins, c_plus, marquage):
+        self.n = n
+        self.m = m
+        self.marquage = marquage
+        self.c_moins = c_moins
+        self.c_plus = c_plus
 
     def read_marquage(self):
         self.marquage = np.zeros(shape=self.n)
@@ -79,28 +72,47 @@ class RdP:
         return True
 
     def est_franchissable(self, marquage_tuple, transition_idx):
-        return np.greater_equal(marquage_tuple, self.c_moins[:][transition_idx])
+        print(" est franchissable ... ")
+        print(f"marquage_tuple = {marquage_tuple}")
+        print(f"transition_idx = {transition_idx}")
+        print(
+            f" c_moins = { self.c_moins[:, transition_idx] }"
+        )  # self.c_moins[:, transition_idx]
+
+        return np.all(marquage_tuple >= self.c_moins[:, transition_idx])
 
     def calcuer_prochain_marquage(self, marquage_tuple, transition_idx):
         return (
             marquage_tuple
-            - self.c_moins[:][transition_idx]
-            + self.c_plus[:][transition_idx]
+            - self.c_moins[:, transition_idx]
+            + self.c_plus[:, transition_idx]
         )
 
     def stop(self, marquage_actuel, prochain_marquage):
         return np.greater(prochain_marquage, marquage_actuel)
 
     def rdp_est_borne(self):
-        np_marquage = 1
+        nb_marquage = 1
         marquage_traité = []
         marquage_non_traité = [self.marquage]
-        i = 0
+        print(f" self.marquage : {self.marquage}")
+        print(f" marquage_non_traité : {marquage_non_traité}")
+
         while len(marquage_non_traité) > 0:
+            print("****************************************")
             try:
-                marquage_actuele = marquage_non_traité.pop()
+                marquage_actuele = marquage_non_traité.pop(0)
+                print(f" marquage_actuele : {marquage_actuele}")
+                marquage_traité.append(marquage_actuele)
+                print(f" marquage_traité : {marquage_traité}")
+                i = 0
+                print(f"m = {self.m}")
+                print(f"i = {i}")
                 while i < self.m:
+                    print(" enter the inner while of transitions ...")
+                    print(self.est_franchissable(marquage_actuele, i))
                     if self.est_franchissable(marquage_actuele, i):
+                        print(f" la transition {i} est franchissable")
                         np_marquage += 1
                         prochain_marquage = self.calcuer_prochain_marquage(
                             marquage_actuel, i
@@ -108,9 +120,44 @@ class RdP:
                         if self.stop(marquage_actuele, prochain_marquage):
                             return False, _, _
                         if not prochain_marquage in marquage_traité:
-                            marquage_non_traité.add(prochain_marquage)
+                            marquage_non_traité.append(prochain_marquage)
                     i = i + 1
-                marquage_traité.add(marquage_actuele)
             except:
                 # ensemble des marquage non trité est vide
-                return True, np_marquage, marquage_traité
+                return True, nb_marquage, marquage_traité
+
+    def tirable(self, M, t):
+        return np.all(M >= self.c_moins[:, t])
+
+    def rdp_est_borne1(self):
+
+        checked = []
+        pending = [self.marquage]
+
+        while pending != []:
+
+            # chek if it already checked
+            M = pending.pop(0)
+            M_in_checked = False
+            for item in checked:
+                if np.all(item == M):
+                    M_in_checked = True
+                    break
+
+            if not M_in_checked:
+                checked.append(M)
+                for t in range(self.m):
+                    if self.tirable(M, t=t):
+                        newM = M + self.c_plus[:, t] - self.c_moins[:, t]
+                        print(f"{M} ---> {newM}")
+                        pending.append(newM)
+
+                        if self.superior(newM, M):
+                            print("--- not bounded ---")
+                            return False
+
+        print(f"bounded with |A| = {len(checked)}")
+        return True
+
+    def superior(self, newM, oldM):
+        return np.all(newM >= oldM) and np.any(newM > oldM)
