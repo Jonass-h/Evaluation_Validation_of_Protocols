@@ -1,12 +1,12 @@
 import numpy as np
 
-
 class RdP:
     ## properties
     n = 0  # cardinalité des place
     m = 0  # cardinalité des transitions
     c_moins = 0
     c_plus = 0
+    c=0
     marquage = 0
 
     ## methods
@@ -16,6 +16,7 @@ class RdP:
         self.marquage = marquage
         self.c_moins = c_moins
         self.c_plus = c_plus
+        self.c = (c_plus)-(c_moins)
 
     def read_marquage(self):
         self.marquage = np.zeros(shape=self.n)
@@ -70,17 +71,7 @@ class RdP:
             print(self.c_moins)
         print("##########################################################")
         return True
-
-    def est_franchissable(self, marquage_tuple, transition_idx):
-        print(" est franchissable ... ")
-        print(f"marquage_tuple = {marquage_tuple}")
-        print(f"transition_idx = {transition_idx}")
-        print(
-            f" c_moins = { self.c_moins[:, transition_idx] }"
-        )  # self.c_moins[:, transition_idx]
-
-        return np.all(marquage_tuple >= self.c_moins[:, transition_idx])
-
+    
     def calcuer_prochain_marquage(self, marquage_tuple, transition_idx):
         return (
             marquage_tuple
@@ -91,73 +82,75 @@ class RdP:
     def stop(self, marquage_actuel, prochain_marquage):
         return np.greater(prochain_marquage, marquage_actuel)
 
-    def rdp_est_borne(self):
-        nb_marquage = 1
-        marquage_traité = []
-        marquage_non_traité = [self.marquage]
-        print(f" self.marquage : {self.marquage}")
-        print(f" marquage_non_traité : {marquage_non_traité}")
-
-        while len(marquage_non_traité) > 0:
-            print("****************************************")
-            try:
-                marquage_actuele = marquage_non_traité.pop(0)
-                print(f" marquage_actuele : {marquage_actuele}")
-                marquage_traité.append(marquage_actuele)
-                print(f" marquage_traité : {marquage_traité}")
-                i = 0
-                print(f"m = {self.m}")
-                print(f"i = {i}")
-                while i < self.m:
-                    print(" enter the inner while of transitions ...")
-                    print(self.est_franchissable(marquage_actuele, i))
-                    if self.est_franchissable(marquage_actuele, i):
-                        print(f" la transition {i} est franchissable")
-                        np_marquage += 1
-                        prochain_marquage = self.calcuer_prochain_marquage(
-                            marquage_actuel, i
-                        )
-                        if self.stop(marquage_actuele, prochain_marquage):
-                            return False, _, _
-                        if not prochain_marquage in marquage_traité:
-                            marquage_non_traité.append(prochain_marquage)
-                    i = i + 1
-            except:
-                # ensemble des marquage non trité est vide
-                return True, nb_marquage, marquage_traité
-
-    def tirable(self, M, t):
-        return np.all(M >= self.c_moins[:, t])
-
-    def rdp_est_borne1(self):
-
-        checked = []
-        pending = [self.marquage]
-
-        while pending != []:
-
-            # chek if it already checked
-            M = pending.pop(0)
-            M_in_checked = False
-            for item in checked:
-                if np.all(item == M):
-                    M_in_checked = True
-                    break
-
-            if not M_in_checked:
-                checked.append(M)
-                for t in range(self.m):
-                    if self.tirable(M, t=t):
-                        newM = M + self.c_plus[:, t] - self.c_moins[:, t]
-                        print(f"{M} ---> {newM}")
-                        pending.append(newM)
-
-                        if self.superior(newM, M):
-                            print("--- not bounded ---")
-                            return False
-
-        print(f"bounded with |A| = {len(checked)}")
-        return True
-
+    def est_franchissable(self, marquage_actuel, transition_idx):
+        return np.all(marquage_actuel >= self.c_moins[:, transition_idx])
+    
     def superior(self, newM, oldM):
         return np.all(newM >= oldM) and np.any(newM > oldM)
+    
+    def rdp_est_borne(self):
+        traité = []
+        non_traité = [self.marquage]
+        
+        while len(non_traité) != 0:
+
+            marquage_actuel = non_traité.pop(0)
+            marquage_exist = False
+            for item in traité:
+                if (np.all(item == marquage_actuel)):
+                    marquage_exist = True
+                    break
+
+            if not marquage_exist:
+                traité.append(marquage_actuel)
+                for t in range(self.n):
+                    if self.est_franchissable(marquage_actuel,t):
+                        nouveau_marquage= marquage_actuel + self.c[:,t]
+                        print(f"{marquage_actuel} ****** {nouveau_marquage}")
+                        non_traité.append(nouveau_marquage)
+                        
+                    
+                        if( self.superior(nouveau_marquage, marquage_actuel) ):
+                            print("  rdp non borné ")
+                            return False
+                    
+        print(f" rdp borné avec : {len(traité)}")
+        return True
+
+    def rdp_sans_blocage(self):
+        traité = []
+        non_traité = [self.marquage]
+        
+        while len(non_traité) != 0:
+
+            marquage_actuel = non_traité.pop(0)
+            marquage_exist = False
+            for item in traité:
+                if (np.all(item == marquage_actuel)):
+                    marquage_exist = True
+                    break
+
+            if not marquage_exist:
+                traité.append(marquage_actuel)
+                counter=0
+                for t in range(self.n):
+                    if self.est_franchissable(marquage_actuel,t):
+                        counter+=1
+                        nouveau_marquage= marquage_actuel + self.c[:,t]
+                        # print(f"{marquage_actuel} ****** {nouveau_marquage}")
+                        non_traité.append(nouveau_marquage)
+                        
+                    
+                        if( self.superior(nouveau_marquage, marquage_actuel) ):
+                            # branche infinie
+                            traité.append(nouveau_marquage)
+                if counter==0:
+                    print("blocage")
+                    return False
+                    
+        print("rdp sans blocage ")
+        return True
+
+    def rdp_reinitialisable(self):
+        
+
