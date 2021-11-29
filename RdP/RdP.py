@@ -145,7 +145,8 @@ class RdP:
                             # branche infinie
                             traité.append(nouveau_marquage)
                 if counter==0:
-                    print("blocage")
+                    print(f"etat de blocage {marquage_actuel}")
+
                     return False
                     
         print("rdp sans blocage ")
@@ -156,66 +157,6 @@ class RdP:
             if (np.all(item == marquage)):
                 return True
         return False
-
-    def marquage_mene_vers_initiale(self,marquage,liste_marquage_menant):
-        # verifier si un marquage donné mene vers le marquage initiale
-        for item in liste_marquage_menant:
-            if (np.all(item == marquage)):
-                return True
-        else :
-            traité = []
-            non_traité = [marquage]
-            
-            while len(non_traité) != 0:
-                marquage_actuel = non_traité.pop(0)
-                #print(f"marquage_actuel  = {marquage_actuel}")
-                # verifier si le marquage est déja traité
-                marquage_exist = self.marquage_existe(marquage_actuel,traité)
-
-                if not marquage_exist:
-                    traité.append(marquage_actuel)
-                    for t in range(self.m):
-                        if self.est_franchissable(marquage_actuel,t):
-                            nouveau_marquage= marquage_actuel + self.c[:,t]
-                            #print(nouveau_marquage)
-                            if np.all(nouveau_marquage == self.marquage) or self.marquage_existe(nouveau_marquage,liste_marquage_menant):
-                                return True
-                            if( self.superior(nouveau_marquage, marquage_actuel) ):
-                                print("RdP infini ... ")
-                                traité.append(nouveau_marquage)
-                            else :
-                                #print("appednig non_traité")
-                                non_traité.append(nouveau_marquage)
-                #print(non_traité)
-            return False
-
-    def rdp_est_reinitialisable_old(self):
-        mene_ver_marquage_initial=[]
-        traité = []
-        non_traité = [self.marquage]
-        
-        while len(non_traité) != 0:
-            # verifier si le marquage à été déja calculé
-            marquage_actuel = non_traité.pop(0)
-            print(marquage_actuel)
-            marquage_exist = self.marquage_existe(marquage_actuel,traité)
-            #print(f"marquage_exist exist : {marquage_exist}")
-            if not marquage_exist:
-                # tester si ce marquage mene vers le marquage initale
-                if self.marquage_mene_vers_initiale(marquage_actuel,mene_ver_marquage_initial) :
-                    mene_ver_marquage_initial.append(marquage_actuel)
-                else:
-                    return False
-                
-                traité.append(marquage_actuel)
-                for t in range(self.m):
-                    if self.est_franchissable(marquage_actuel,t):
-                        nouveau_marquage= marquage_actuel + self.c[:,t]
-                        if( self.superior(nouveau_marquage, marquage_actuel) ):
-                            traité.append(nouveau_marquage)
-                        else :
-                            non_traité.append(nouveau_marquage)
-        return True
     ## idée de réinitialisation
     def construire_ensemble_marquage_accessible_and_flag(self):
         traité = []
@@ -290,3 +231,43 @@ class RdP:
                     return all(self.flag)
 
         return False
+
+    def rdp_quasi_vivant(self):
+        # toutes les transition doivent apparaitre dans le GMA
+        traité = []
+        non_traité = [self.marquage]
+        ensemble_transition_fanchi = set()
+        
+        while len(non_traité) != 0:
+
+            marquage_actuel = non_traité.pop(0)
+            marquage_exist = False
+            for item in traité:
+                if (np.all(item == marquage_actuel)):
+                    marquage_exist = True
+                    break
+
+            if not marquage_exist:
+                traité.append(marquage_actuel)
+                for t in range(self.m):
+                    if self.est_franchissable(marquage_actuel,t):
+                        ensemble_transition_fanchi.add(t)
+                        print(len(ensemble_transition_fanchi))
+                        if len(ensemble_transition_fanchi)==self.m:
+                            return True
+                        nouveau_marquage= marquage_actuel + self.c[:,t]
+                        
+                        if( self.superior(nouveau_marquage,marquage_actuel) ):
+                            traité.append(nouveau_marquage)
+                        else :
+                            non_traité.append(nouveau_marquage)
+                    
+        return False
+
+    def rdp_vivant(self):
+        self.construire_ensemble_marquage_accessible_and_flag()
+        for item in self.ensemble_marquage_accessible:
+            temp_rdp=RdP(self.n, self.m, self.c_moins, self.c_plus, marquage=item)
+            if not temp_rdp.rdp_quasi_vivant():
+                return False
+        return True
