@@ -6,8 +6,10 @@ class RdP:
     m = 0  # cardinalité des transitions
     c_moins = 0
     c_plus = 0
-    c=0
+    c=0 # calculable
     marquage = 0
+    ensemble_marquage_accessible=0#calculable
+    flag=[]#calculable => qui dit mene ou non vers marquage initiale
 
     ## methods
     def __init__(self, n, m, c_moins, c_plus, marquage):
@@ -87,12 +89,6 @@ class RdP:
     
     def superior(self, nouveau_marquage, ancien_marquage):
         return np.all(nouveau_marquage >= ancien_marquage) and np.any(nouveau_marquage > ancien_marquage)
-    
-    def superior_all(self,nouveau_marquage,list_marquage_traité):
-        for item in list_marquage_traité :
-            if not self.superior(nouveau_marquage,item):
-                return False
-        return True
 
     def rdp_est_borne(self):
         traité = []
@@ -114,7 +110,7 @@ class RdP:
                         nouveau_marquage= marquage_actuel + self.c[:,t]
                         print(f"{marquage_actuel} ****** {nouveau_marquage}")
                         non_traité.append(nouveau_marquage)
-                        if( self.superior_all(nouveau_marquage,traité) ):
+                        if( self.superior(nouveau_marquage,marquage_actuel) ):
                             print("  rdp non borné ")
                             return False
                     
@@ -193,7 +189,7 @@ class RdP:
                 #print(non_traité)
             return False
 
-    def rdp_est_reinitialisable(self):
+    def rdp_est_reinitialisable_old(self):
         mene_ver_marquage_initial=[]
         traité = []
         non_traité = [self.marquage]
@@ -220,3 +216,77 @@ class RdP:
                         else :
                             non_traité.append(nouveau_marquage)
         return True
+    ## idée de réinitialisation
+    def construire_ensemble_marquage_accessible_and_flag(self):
+        traité = []
+        non_traité = [self.marquage]
+        ensemble_marquage_accessible=[self.marquage]
+        flag=[True]
+        
+        while len(non_traité) != 0:
+            marquage_actuel = non_traité.pop(0)
+            marquage_exist = False
+            for item in traité:
+                if (np.all(item == marquage_actuel)):
+                    marquage_exist = True
+                    break
+
+            if not marquage_exist:
+                traité.append(marquage_actuel)
+                for t in range(self.m):
+                    if self.est_franchissable(marquage_actuel,t):
+                        nouveau_marquage= marquage_actuel + self.c[:,t]
+                        
+                        if( self.superior(nouveau_marquage,marquage_actuel) ):
+                            # branche infinie
+                            traité.append(nouveau_marquage)
+                        else :
+                            non_traité.append(nouveau_marquage)
+                            ensemble_marquage_accessible.append(nouveau_marquage)
+                            flag.append(False)
+                    
+        self.ensemble_marquage_accessible=ensemble_marquage_accessible
+        self.flag=flag
+        """ print(len(self.flag)==len(self.ensemble_marquage_accessible))
+        print("ensemble de marquage accessible creé") """
+
+    def marquage_mene_vers_initiale_one_step(self,marquage,indice,liste_marquage_menant):
+        for t in range(self.m):
+            if self.est_franchissable(marquage,t):
+                nouveau_marquage= marquage + self.c[:,t]
+                if self.marquage_existe(nouveau_marquage,liste_marquage_menant) :
+                    liste_marquage_menant.append(marquage)
+                    self.flag[indice]=True
+                    return liste_marquage_menant
+        return liste_marquage_menant
+
+    def rdp_est_reinitialisable(self):
+        self.construire_ensemble_marquage_accessible_and_flag()
+        """ print(f"ensemble_marquage_accessible {self.ensemble_marquage_accessible}")
+        print(f"flag {self.flag}") """
+        self.ensemble_marquage_accessible.pop(0)
+        self.flag.pop(0)
+        ensemble_marquage_menant=[self.marquage]
+        ## idée :
+        # 1. construire ensemble de marquage accessible
+        # 2. parcourir ensemble de marquage accessible plusieur itération
+        # 3. et pour chaque itération noter les marquage qui mene vers marquage initiale
+        # et ainsi de suite
+        sortir=False
+        while not sortir:
+                sortir=True
+                # pour chaque niveau de marquage
+                avant=len(ensemble_marquage_menant)
+                for i in range(len(self.ensemble_marquage_accessible)):
+                    if not self.flag[i]:
+                        sortir=False
+                        liste_marquage_menant=self.marquage_mene_vers_initiale_one_step(self.ensemble_marquage_accessible[i],i,ensemble_marquage_menant)
+                if avant==len(ensemble_marquage_menant) :
+                    """                     
+                    print(f"ensemble_marquage_accessible {self.ensemble_marquage_accessible}")
+                    print(f"flag {self.flag}")
+                    print(len(self.flag)==len(self.ensemble_marquage_accessible)) 
+                    """
+                    return all(self.flag)
+
+        return False
